@@ -18,9 +18,24 @@
     padding-top: 12px;
     padding-bottom: 12px;
     text-align: left;
-    background-color: #4CAF50;
+    background-color: #698AFC;
     color: white;
 }
 h2{
 	color: gray;
 }
+
+canvas#myChart {
+	width: 480px !important;
+    height: 240px !important;
+}
+
+.ib{
+	display:inline-block;
+}
+
+
+.container {
+    width: 1400px;
+}
+
