@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+  xmlns:flowable="http://flowable.org/bpmn"
+  typeLanguage="http://www.w3.org/2001/XMLSchema"
+  expressionLanguage="http://www.w3.org/1999/XPath"
+  targetNamespace="http://www.flowable.org/processdef">
+
+  <process id="reconciliation" name="Reconciliation Process" isExecutable="true">
+
+    <startEvent id="startEvent"/>
+<!--     <sequenceFlow sourceRef="startEvent" targetRef="retrieveFiles"/>
+	
+	<serviceTask id="retrieveFiles" name="Retrieve files from aws repository"
+        flowable:class="org.flowable.CallExternalSystemDelegate"/>
+	<sequenceFlow sourceRef="retrieveFiles" targetRef="processFiles"/>
+	
+	<exclusiveGateway id="processFiles"/>
+	<serviceTask id="processFiles" name="Extract and match the transaction with crypto data"
+        flowable:class="org.flowable.CallExternalSystemDelegate"/>
+	<sequenceFlow sourceRef="processFiles" targetRef="persistResults"/>
+	
+	<exclusiveGateway id="persistResults"/>
+	<serviceTask id="persistResults" name="Save successful and failed transactions"
+        flowable:class="org.flowable.CallExternalSystemDelegate"/>
+	<sequenceFlow sourceRef="persistResults" targetRef="createAlert"/>
+	
+	<exclusiveGateway id="createAlert"/>
+	<serviceTask id="createAlert" name="Send an alert for both successful and failed transactions"
+        flowable:class="org.flowable.CallExternalSystemDelegate"/>
+	<sequenceFlow sourceRef="createAlert" targetRef="processEnd"/> -->
+	<sequenceFlow sourceRef="startEvent" targetRef="reconciliationProcess"/>
+	
+	<serviceTask id="reconciliationProcess" name="Do the reconciliation process"
+        flowable:class="com.anx.reconciliation.task.ReconciliationProcess"/>
+	<sequenceFlow sourceRef="reconciliationProcess" targetRef="processEnd"/>
+	
+	
+    <endEvent id="processEnd"/>
+	
+  </process>
+
+</definitions>
