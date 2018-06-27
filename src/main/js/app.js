@@ -4,6 +4,7 @@
 const React = require('react');
 const ReactDOM = require('react-dom');
 const client = require('./client');
+import HeaderClass from './header.js';
 const Doughnut = require("react-chartjs-2").Doughnut;
 // end::vars[]
 
@@ -34,16 +35,19 @@ class App extends React.Component {
 	
 	render() {
 		return (
-			<div className="container">
-				<div className="ib">
-				<Graph data={this.state.data} title={"Pending Transactions"}/>
-				<Graph data={this.state.data} title={"Exceptions"}/>
-				<Graph data={this.state.data} title={"Successfully Matched"}/>
+			<div>
+				<HeaderClass/>
+				<div className="container">
+					<div className="ib">
+					<Graph data={this.state.data} title={"Pending Transactions"}/>
+					<Graph data={this.state.data} title={"Exceptions"}/>
+					<Graph data={this.state.data} title={"Successfully Matched"}/>
+					</div>
+					<div>		
+					<TableTitle />
+					<TransactionList transactions={this.state.transactions}/>
+					</div>
 				</div>
-				<div>		
-				<TableTitle />
-			    <TransactionList transactions={this.state.transactions}/>
-			    </div>
 			</div>
 		)
 	}
