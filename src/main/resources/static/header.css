@@ -7,3 +7,17 @@
 .headermenu a {
 	color: black;
 }
+.headermenu ul {
+  list-style-type: none;
+
+}
+.headermenu .navbar-nav {
+    width: 100%;
+    text-align: center;
+    
+}
+
+.headermenu .navbar-nav  li {
+      float: none;
+      display: inline-block;
+}
