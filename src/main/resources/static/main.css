@@ -85,3 +85,29 @@ ul.nav.navbar-nav.navbar-right li{
 .pad-bot-10-em{
 	padding-bottom: 10em;	
 }
+
+.mar-l-20{
+	margin-left: 20px;
+}
+
+.mar-l-10{
+	margin-left: 10px;
+}
+
+.mar-l-5{
+	margin-left: 5px;
+}
+
+.mar-r-20{
+	margin-right: 20px;
+}
+
+.mar-r-10{
+	margin-right: 10px;
+}
+
+.mar-r-5{
+	margin-right: 5px;
+}
+
+

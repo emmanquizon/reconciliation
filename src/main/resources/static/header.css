@@ -1,0 +1,23 @@
+.headermenu {
+	background-color: #ffffff;
+	margin-bottom: 1.5%;
+    border-bottom : 1px solid #000!important;
+}
+
+.headermenu a {
+	color: black;
+}
+.headermenu ul {
+  list-style-type: none;
+
+}
+.headermenu .navbar-nav {
+    width: 100%;
+    text-align: center;
+    
+}
+
+.headermenu .navbar-nav  li {
+      float: none;
+      display: inline-block;
+}
