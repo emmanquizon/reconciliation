@@ -44,7 +44,7 @@
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 	
 	// tag::vars[]
 	
@@ -60,6 +60,9 @@
 	var ReactDOM = __webpack_require__(37);
 	var client = __webpack_require__(184);
 	var Doughnut = __webpack_require__(232).Doughnut;
+	var Header = __webpack_require__(551);
+	var follow = __webpack_require__(552);
+	var root = '/api';
 	// end::vars[]
 	
 	// tag::app[]
@@ -72,44 +75,117 @@
 	
 			var _this = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, props));
 	
-			_this.state = { transactions: [],
+			_this.state = { transactions: [], attributes: [], pageSize: 10, links: {}, page: {},
 				data: {
 					labels: ["Mathematics", "Chemistry", "Physics"],
 					datasets: [{
 						backgroundColor: ["#46C9B8", "#F76775", "#6F58FF"],
 						data: [50, 25, 25]
 					}]
-				} };
+				}
+			};
+			_this.updatePageSize = _this.updatePageSize.bind(_this);
+			_this.onNavigate = _this.onNavigate.bind(_this);
+			_this.onSearch = _this.onSearch.bind(_this);
 			return _this;
 		}
 	
 		_createClass(App, [{
-			key: 'componentDidMount',
-			value: function componentDidMount() {
+			key: "loadFromServer",
+			value: function loadFromServer(pageSize) {
 				var _this2 = this;
 	
-				client({ method: 'GET', path: '/api/txTransactions' }).done(function (response) {
-					_this2.setState({ transactions: response.entity._embedded.txTransactions });
+				follow(client, root, [{ rel: 'txTransactions', params: { size: pageSize } }]).then(function (transactionCollection) {
+					return client({
+						method: 'GET',
+						path: transactionCollection.entity._links.profile.href,
+						headers: { 'Accept': 'application/schema+json' }
+					}).then(function (schema) {
+						_this2.schema = schema.entity;
+						return transactionCollection;
+					});
+				}).done(function (transactionCollection) {
+					_this2.setState({
+						transactions: transactionCollection.entity._embedded.txTransactions,
+						attributes: Object.keys(_this2.schema.properties),
+						pageSize: pageSize,
+						links: transactionCollection.entity._links,
+						page: transactionCollection.entity.page });
 				});
 			}
 		}, {
-			key: 'render',
+			key: "onNavigate",
+			value: function onNavigate(navUri) {
+				var _this3 = this;
+	
+				client({ method: 'GET', path: navUri }).done(function (transactionCollection) {
+					_this3.setState({
+						transactions: transactionCollection.entity._embedded.txTransactions,
+						attributes: _this3.state.attributes,
+						pageSize: _this3.state.pageSize,
+						links: transactionCollection.entity._links,
+						page: transactionCollection.entity.page
+					});
+				});
+			}
+		}, {
+			key: "onSearch",
+			value: function onSearch(paramsX) {
+				var _this4 = this;
+	
+				follow(client, '/api/txTransactions/search', [{ rel: 'findByTxnId', params: paramsX }]).then(function (transactionCollection) {
+					return transactionCollection;
+				}).done(function (transactionCollection) {
+					_this4.setState({
+						transactions: transactionCollection.entity._embedded.txTransactions,
+						attributes: _this4.state.attributes,
+						pageSize: paramsX.page,
+						links: transactionCollection.entity._links,
+						page: transactionCollection.entity.page });
+				});
+			}
+		}, {
+			key: "updatePageSize",
+			value: function updatePageSize(pageSize) {
+				if (pageSize !== this.state.pageSize) {
+					this.loadFromServer(pageSize);
+				}
+			}
+		}, {
+			key: "componentDidMount",
+			value: function componentDidMount() {
+				this.loadFromServer(this.state.pageSize);
+			}
+		}, {
+			key: "render",
 			value: function render() {
 				return React.createElement(
-					'div',
-					{ className: 'container' },
+					"div",
+					null,
+					React.createElement(Header, { img: "/images/img_avatar.png", name: "Emman Quizon", email: "emmanquizon04@gmail.com" }),
 					React.createElement(
-						'div',
-						{ className: 'ib' },
-						React.createElement(Graph, { data: this.state.data, title: "Pending Transactions" }),
-						React.createElement(Graph, { data: this.state.data, title: "Exceptions" }),
-						React.createElement(Graph, { data: this.state.data, title: "Successfully Matched" })
-					),
-					React.createElement(
-						'div',
-						null,
-						React.createElement(TableTitle, null),
-						React.createElement(TransactionList, { transactions: this.state.transactions })
+						"div",
+						{ className: "container pad-bot-10-em" },
+						React.createElement(LegendList, null),
+						React.createElement(
+							"div",
+							{ className: "ib" },
+							React.createElement(Graph, { data: this.state.data, title: "Pending Transactions", legend: false }),
+							React.createElement(Graph, { data: this.state.data, title: "Exceptions", legend: false }),
+							React.createElement(Graph, { data: this.state.data, title: "Successfully Matched", legend: false })
+						),
+						React.createElement(
+							"div",
+							null,
+							React.createElement(TableTitle, null),
+							React.createElement(TransactionList, { transactions: this.state.transactions,
+								links: this.state.links,
+								pageSize: this.state.pageSize,
+								onNavigate: this.onNavigate,
+								updatePageSize: this.updatePageSize,
+								onSearch: this.onSearch,
+								page: this.state.page })
+						)
 					)
 				);
 			}
@@ -125,65 +201,236 @@
 	var TransactionList = function (_React$Component2) {
 		_inherits(TransactionList, _React$Component2);
 	
-		function TransactionList() {
+		function TransactionList(props) {
 			_classCallCheck(this, TransactionList);
 	
-			return _possibleConstructorReturn(this, (TransactionList.__proto__ || Object.getPrototypeOf(TransactionList)).apply(this, arguments));
+			var _this5 = _possibleConstructorReturn(this, (TransactionList.__proto__ || Object.getPrototypeOf(TransactionList)).call(this, props));
+	
+			_this5.handleNavFirst = _this5.handleNavFirst.bind(_this5);
+			_this5.handleNavPrev = _this5.handleNavPrev.bind(_this5);
+			_this5.handleNavNext = _this5.handleNavNext.bind(_this5);
+			_this5.handleNavLast = _this5.handleNavLast.bind(_this5);
+			_this5.handleInput = _this5.handleInput.bind(_this5);
+			_this5.handleSearch = _this5.handleSearch.bind(_this5);
+			return _this5;
 		}
 	
 		_createClass(TransactionList, [{
-			key: 'render',
+			key: "handleInput",
+			value: function handleInput() {
+				var pageSize = ReactDOM.findDOMNode(this.refs.pageSize).value;
+				var txnID = ReactDOM.findDOMNode(this.refs.txnId).value;
+				if (/^[0-9]+$/.test(pageSize)) {
+					if (txnID != "") {
+						this.props.onSearch({ size: pageSize, txnId: txnID });
+					} else {
+						this.props.updatePageSize(pageSize);
+					}
+				} else {
+					ReactDOM.findDOMNode(this.refs.pageSize).value = pageSize.substring(0, pageSize.length - 1);
+				}
+			}
+		}, {
+			key: "handleSearch",
+			value: function handleSearch() {
+				var txnID = ReactDOM.findDOMNode(this.refs.txnId).value;
+				var pageSize = ReactDOM.findDOMNode(this.refs.pageSize).value;
+				if (txnID == "") {
+					this.props.updatePageSize(pageSize);
+				} else {
+					this.props.onSearch({ size: pageSize, txnId: txnID });
+				}
+			}
+		}, {
+			key: "handleNavFirst",
+			value: function handleNavFirst() {
+				this.props.onNavigate(this.props.links.first.href);
+			}
+		}, {
+			key: "handleNavPrev",
+			value: function handleNavPrev() {
+				this.props.onNavigate(this.props.links.prev.href);
+			}
+		}, {
+			key: "handleNavNext",
+			value: function handleNavNext() {
+				this.props.onNavigate(this.props.links.next.href);
+			}
+		}, {
+			key: "handleNavLast",
+			value: function handleNavLast() {
+				this.props.onNavigate(this.props.links.last.href);
+			}
+		}, {
+			key: "pageLabel",
+			value: function pageLabel() {
+				var number = this.props.page.number;
+				var size = this.props.page.size;
+				var totalElements = this.props.page.totalElements;
+				var lastCount = void 0;
+				if (totalElements === 0) {
+					return React.createElement(
+						"div",
+						{ className: "btn-group pull-left" },
+						React.createElement(
+							"strong",
+							null,
+							"No results found"
+						),
+						"."
+					);
+				} else if ((number + 1) * size >= totalElements) {
+					lastCount = totalElements;
+				} else {
+					lastCount = (number + 1) * size;
+				}
+				return React.createElement(
+					"div",
+					{ className: "btn-group pull-left" },
+					"Showing ",
+					React.createElement(
+						"strong",
+						null,
+						number * size + 1
+					),
+					" to ",
+					React.createElement(
+						"strong",
+						null,
+						lastCount
+					),
+					" of ",
+					React.createElement(
+						"strong",
+						null,
+						totalElements
+					),
+					"."
+				);
+			}
+		}, {
+			key: "render",
 			value: function render() {
 				var transactions = this.props.transactions.map(function (transaction) {
 					return React.createElement(Transaction, { key: transaction._links.self.href, transaction: transaction });
 				});
-				console.log(transactions);
-				return React.createElement(
-					'table',
-					{ className: 'transactionsTbl' },
-					React.createElement(
-						'tbody',
-						null,
+				var navLinks = [];
+				if ("first" in this.props.links) {
+					navLinks.push(React.createElement(
+						"button",
+						{ key: "first", disabled: this.props.page.number === 0, className: "btn btn-default", onClick: this.handleNavFirst },
 						React.createElement(
-							'tr',
+							"strong",
+							null,
+							"First"
+						)
+					));
+				}
+				if ("prev" in this.props.links) {
+					navLinks.push(React.createElement(
+						"button",
+						{ key: "prev", className: "btn btn-default", onClick: this.handleNavPrev },
+						React.createElement(
+							"strong",
+							null,
+							"Prev"
+						)
+					));
+				}
+				if ("next" in this.props.links) {
+					navLinks.push(React.createElement(
+						"button",
+						{ key: "next", className: "btn btn-default", onClick: this.handleNavNext },
+						React.createElement(
+							"strong",
+							null,
+							"Next"
+						)
+					));
+				}
+				if ("last" in this.props.links) {
+					navLinks.push(React.createElement(
+						"button",
+						{ key: "last", disabled: this.props.page.number + 1 === this.props.page.totalPages, className: "btn btn-default", onClick: this.handleNavLast },
+						React.createElement(
+							"strong",
+							null,
+							"Last"
+						)
+					));
+				}
+	
+				return React.createElement(
+					"div",
+					null,
+					React.createElement(
+						"strong",
+						null,
+						"Show : "
+					),
+					React.createElement("input", { ref: "pageSize", style: { width: '100px' }, defaultValue: this.props.pageSize, onInput: this.handleInput }),
+					React.createElement(
+						"div",
+						{ className: "pull-right col-md-4" },
+						React.createElement("input", { placeholder: "Txn ID", ref: "txnId", style: { width: '100%', fontSize: '12px' }, onInput: this.handleSearch })
+					),
+					React.createElement(
+						"table",
+						{ className: "transactionsTbl" },
+						React.createElement(
+							"tbody",
 							null,
 							React.createElement(
-								'th',
+								"tr",
 								null,
-								'Transaction ID'
+								React.createElement(
+									"th",
+									null,
+									"Transaction ID"
+								),
+								React.createElement(
+									"th",
+									null,
+									"Address"
+								),
+								React.createElement(
+									"th",
+									null,
+									"Amount"
+								),
+								React.createElement(
+									"th",
+									null,
+									"Fee"
+								),
+								React.createElement(
+									"th",
+									null,
+									"Time"
+								),
+								React.createElement(
+									"th",
+									null,
+									"Type"
+								),
+								React.createElement(
+									"th",
+									null,
+									"Matched"
+								)
 							),
-							React.createElement(
-								'th',
-								null,
-								'Address'
-							),
-							React.createElement(
-								'th',
-								null,
-								'Amount'
-							),
-							React.createElement(
-								'th',
-								null,
-								'Fee'
-							),
-							React.createElement(
-								'th',
-								null,
-								'Time'
-							),
-							React.createElement(
-								'th',
-								null,
-								'Type'
-							),
-							React.createElement(
-								'th',
-								null,
-								'Matched'
-							)
-						),
-						transactions
+							transactions
+						)
+					),
+					React.createElement(
+						"div",
+						null,
+						this.pageLabel(),
+						React.createElement(
+							"div",
+							{ className: "btn-group pull-right" },
+							navLinks
+						)
 					)
 				);
 			}
@@ -196,96 +443,108 @@
 	// tag::employee[]
 	
 	
-	var Transaction = function (_React$Component3) {
-		_inherits(Transaction, _React$Component3);
-	
-		function Transaction() {
-			_classCallCheck(this, Transaction);
-	
-			return _possibleConstructorReturn(this, (Transaction.__proto__ || Object.getPrototypeOf(Transaction)).apply(this, arguments));
-		}
-	
-		_createClass(Transaction, [{
-			key: 'render',
-			value: function render() {
-				return React.createElement(
-					'tr',
-					null,
-					React.createElement(
-						'td',
-						null,
-						this.props.transaction.txnId
-					),
-					React.createElement(
-						'td',
-						null,
-						this.props.transaction.address
-					),
-					React.createElement(
-						'td',
-						null,
-						this.props.transaction.amount
-					),
-					React.createElement(
-						'td',
-						null,
-						this.props.transaction.fee
-					),
-					React.createElement(
-						'td',
-						null,
-						this.props.transaction.time
-					),
-					React.createElement(
-						'td',
-						null,
-						this.props.transaction.type
-					),
-					React.createElement(
-						'td',
-						null,
-						String(this.props.transaction.hasMatched)
-					)
-				);
-			}
-		}]);
-	
-		return Transaction;
-	}(React.Component);
+	var Transaction = function Transaction(props) {
+		return React.createElement(
+			"tr",
+			null,
+			React.createElement(
+				"td",
+				null,
+				props.transaction.txnId
+			),
+			React.createElement(
+				"td",
+				null,
+				props.transaction.address
+			),
+			React.createElement(
+				"td",
+				null,
+				props.transaction.amount
+			),
+			React.createElement(
+				"td",
+				null,
+				props.transaction.fee
+			),
+			React.createElement(
+				"td",
+				null,
+				props.transaction.time
+			),
+			React.createElement(
+				"td",
+				null,
+				props.transaction.type
+			),
+			React.createElement(
+				"td",
+				null,
+				String(props.transaction.hasMatched)
+			)
+		);
+	};
 	// end::employee[]
 	
 	var TableTitle = function TableTitle() {
 		return React.createElement(
-			'h2',
+			"h2",
 			null,
-			' Table of Exceptions '
+			" Table of Exceptions "
 		);
 	};
 	
 	var Graph = function Graph(props) {
 		return React.createElement(
-			'div',
-			{ className: 'ib text-center' },
+			"div",
+			{ className: "ib text-center" },
 			React.createElement(
-				'div',
+				"div",
 				{ style: { width: '450px', height: '260px', float: 'left', position: 'relative' } },
 				React.createElement(
-					'div',
+					"div",
 					{ style: { width: '100%', height: '120px', position: 'absolute', top: '50%', left: 0, marginTop: '-20px', lineHeight: '19px', textAlign: 'center', zIndex: '-999999999999999' } },
-					'99%',
-					React.createElement('br', null)
+					"99%",
+					React.createElement("br", null)
 				),
 				React.createElement(Doughnut, {
 					data: props.data,
 					options: {
-						cutoutPercentage: 80
+						cutoutPercentage: 80,
+						legend: {
+							display: props.legend
+						}
 					} })
 			),
 			React.createElement(
-				'h4',
+				"h4",
 				null,
 				props.title
 			)
+		);
+	};
+	
+	var LegendList = function LegendList(props) {
+		return React.createElement(
+			"div",
+			{ className: "ib" },
+			React.createElement(Legend, { color: "#46C9B8", name: "Mathematics" }),
+			React.createElement(Legend, { color: "#F76775", name: "Chemistry" }),
+			React.createElement(Legend, { color: "#6F58FF", name: "Physics" })
+		);
+	};
+	
+	var Legend = function Legend(props) {
+		return React.createElement(
+			"div",
+			null,
+			React.createElement(
+				"span",
+				{ style: { fontSize: '20px', color: props.color } },
+				"\u25A0"
+			),
+			" ",
+			props.name
 		);
 	};
 	
@@ -63472,6 +63731,153 @@
 	
 	module.exports = createBaseEach;
 
+
+/***/ }),
+/* 551 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	var React = __webpack_require__(1);
+	var ReactDOM = __webpack_require__(37);
+	
+	var Header = function Header(props) {
+		return React.createElement(
+			"nav",
+			{ className: "navbar navbar-default", role: "navigation" },
+			React.createElement(
+				"div",
+				{ className: "container-fluid" },
+				React.createElement(
+					"div",
+					{ className: "navbar-collapse collapse" },
+					React.createElement(
+						"ul",
+						{ className: "nav navbar-nav" },
+						React.createElement(
+							"li",
+							null,
+							React.createElement(
+								"div",
+								{ style: { margin: '1em', display: 'inline-block' } },
+								React.createElement("img", { width: "75", src: props.img }),
+								React.createElement(
+									"div",
+									{ style: { display: 'inline-block', marginLeft: '10px' } },
+									React.createElement(
+										"div",
+										{ style: { fontSize: '1.25em', fontWeight: 'bold' } },
+										props.name
+									),
+									React.createElement(
+										"div",
+										null,
+										props.email
+									)
+								)
+							)
+						)
+					),
+					React.createElement(
+						"ul",
+						{ className: "nav navbar-nav navbar-center" },
+						React.createElement(
+							"li",
+							null,
+							React.createElement(
+								"select",
+								{ className: "main-dropdown" },
+								React.createElement(
+									"option",
+									null,
+									"Bitcoin"
+								),
+								React.createElement(
+									"option",
+									null,
+									"Ethereum"
+								),
+								React.createElement(
+									"option",
+									null,
+									"Ripple"
+								),
+								React.createElement(
+									"option",
+									null,
+									"FIAT"
+								)
+							)
+						)
+					),
+					React.createElement(
+						"ul",
+						{ className: "nav navbar-nav navbar-right" },
+						React.createElement(
+							"li",
+							null,
+							React.createElement(
+								"a",
+								{ href: "#", style: { color: 'black' } },
+								"Sign Out ",
+								React.createElement("img", { src: "/images/logout.png" })
+							)
+						)
+					)
+				)
+			)
+		);
+	};
+	
+	module.exports = Header;
+
+/***/ }),
+/* 552 */
+/***/ (function(module, exports) {
+
+	'use strict';
+	
+	module.exports = function follow(api, rootPath, relArray) {
+		var root = api({
+			method: 'GET',
+			path: rootPath
+		});
+	
+		return relArray.reduce(function (root, arrayItem) {
+			var rel = typeof arrayItem === 'string' ? arrayItem : arrayItem.rel;
+			return traverseNext(root, rel, arrayItem);
+		}, root);
+	
+		function traverseNext(root, rel, arrayItem) {
+			return root.then(function (response) {
+				if (hasEmbeddedRel(response.entity, rel)) {
+					return response.entity._embedded[rel];
+				}
+	
+				if (!response.entity._links) {
+					return [];
+				}
+	
+				if (typeof arrayItem === 'string') {
+					return api({
+						method: 'GET',
+						path: response.entity._links[rel].href
+					});
+				} else {
+					console.log(response.entity._links);
+					return api({
+						method: 'GET',
+						path: response.entity._links[rel].href,
+						params: arrayItem.params
+					});
+				}
+			});
+		}
+	
+		function hasEmbeddedRel(entity, rel) {
+			return entity._embedded && entity._embedded.hasOwnProperty(rel);
+		}
+	};
 
 /***/ })
 /******/ ]);

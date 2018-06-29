@@ -3,6 +3,8 @@
     font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
     border-collapse: collapse;
     width: 100%;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
 }
 
 .transactionsTbl td, .transactionsTbl th {
@@ -39,3 +41,47 @@ canvas#myChart {
     width: 1400px;
 }
 
+
+.navbar {
+	background-color: white;
+}
+.navbar img{
+	border-radius:50%;
+}
+
+hr {
+    margin-top: 0px; 
+}
+
+@media (min-width: 768px) {
+  .navbar-nav.navbar-center {
+    position: absolute;
+    left: 50%;
+    top: 20%;
+    transform: translatex(-50%);
+  }
+}
+
+.main-dropdown {
+    width: 40em;
+    height: 3em;
+    background-color: #053763;
+    color: white;
+    border-radius: 3px;
+	  text-align: center;
+	  text-align-last: center;
+}
+
+nav.navbar{
+	border-bottom: 1.5px solid black;
+	border-radius: 0px;
+}
+
+ul.nav.navbar-nav.navbar-right li{
+    padding-top: 20%;
+    display:inline-block;
+}
+
+.pad-bot-10-em{
+	padding-bottom: 10em;	
+}

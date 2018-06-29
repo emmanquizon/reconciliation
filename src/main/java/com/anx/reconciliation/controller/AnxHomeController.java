@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.anx.reconciliation.entity.TxTransaction;
@@ -40,7 +41,8 @@ public class AnxHomeController {
 		return "index";
 	}
 	
-	@RequestMapping(value = "/reconcile/bitcoin")
+	
+	@GetMapping(value = "/reconcile/bitcoin")
 	public String doBitcoinReconciliation() {
 		bitcoinService.runBtcChecker();
 		
